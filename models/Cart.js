@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const cartItemSchema = new mongoose.Schema({
   propertyId: {
     type: String,
-    ref: 'Product',
     required: true
   },
   pricePerDay: {

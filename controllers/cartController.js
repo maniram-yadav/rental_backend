@@ -1,4 +1,5 @@
 const { successResponse, errorResponse } = require('../utils/response');
+const { isValidDate ,getDayDifference} = require('../utils/util');
 const Cart = require('../models/Cart');
 
 //get cart
@@ -18,8 +19,19 @@ exports.getCart = async (req, res) => {
 // Add item to cart
 exports.addToCart = async (req, res) => {
   try {
+    const maxLength = 10;
     const { userId, propertyId, startTime,endTime, pricePerDay } = req.body;
-
+    
+    if(!isValidDate(startTime) && !isValidDate(endTime)){
+      errorResponse(res, 404, "Invalid Date Format");
+    }
+    const days = getDayDifference(startTime.substring(0, maxLength),
+        endTime.substring(0, maxLength));
+    if(days<0) {
+         errorResponse(res, 404, "Start Date is greater than End Date");
+    }
+    console.log(days);
+    
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -32,11 +44,12 @@ exports.addToCart = async (req, res) => {
     if (itemIndex > -1) {
       cart.items[itemIndex].startTime = startTime;
       cart.items[itemIndex].endTime = endTime;
-      
+      cart.items[itemIndex].pricePerDay = pricePerDay;
     } else {
       cart.items.push({ propertyId, startTime,endTime, pricePerDay });
     }
 
+    
     await cart.save();
     successResponse(res, 200, cart);
   } catch (err) {
@@ -44,14 +57,27 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-// Update cart item quantity
+// Update cart item date
 exports.updateCartItem = async (req, res) => {
   try {
+    const maxLength = 10;
     const { userId, propertyId, startTime,endTime, pricePerDay } = req.body;
     
     if(!startTime || !endTime) {
             return errorResponse(res, 404, 'Invalid Date provided');
     }
+    
+    if(!isValidDate(startTime) && !isValidDate(endTime)){
+      errorResponse(res, 404, "Invalid Date Format");
+    }
+    const days = getDayDifference(startTime.substring(0, maxLength),
+        endTime.substring(0, maxLength));
+    if(days<0) {
+         errorResponse(res, 404, "Start Date is greater than End Date");
+    }
+    console.log(days);
+    
+
     const cart = await Cart.findOne({ userId });
     if (!cart) {
       return errorResponse(res, 404, 'Cart not found');
@@ -64,6 +90,7 @@ exports.updateCartItem = async (req, res) => {
 
     cart.items[itemIndex].startTime = startTime;
     cart.items[itemIndex].endTime = endTime;
+    cart.items[itemIndex].pricePerDay = pricePerDay;
     
     await cart.save();
     successResponse(res, 200, cart);
